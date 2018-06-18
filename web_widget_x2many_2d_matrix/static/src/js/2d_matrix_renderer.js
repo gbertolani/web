@@ -154,7 +154,10 @@ odoo.define('web_widget_x2many_2d_matrix.X2Many2dMatrixRenderer', function (requ
     _renderRow: function (row) {
       var self = this;
       var $tr = $('<tr/>', {class: 'o_data_row'});
-      $tr = $tr.append(self._renderLabelCell(row.data[0]));
+      var existentRow = _.filter(row.data, function(r){
+          return r !== undefined;
+      })
+      $tr = $tr.append(self._renderLabelCell(existentRow[0]));
       var $cells = _.map(this.columns, function (node, index) {
         var record = row.data[index];
         // make the widget use our field value for each cell
@@ -224,23 +227,33 @@ odoo.define('web_widget_x2many_2d_matrix.X2Many2dMatrixRenderer', function (requ
       }
       // TODO roadmap: here we should collect possible extra params
       // the user might want to attach to each single cell.
-      var $td = $('<td>', {
-        'class': tdClassName,
-        'data-form-id': record.id,
-        'data-id': record.data.id,
-      });
-      // We register modifiers on the <td> element so that it gets the correct
-      // modifiers classes (for styling)
-      var modifiers = this._registerModifiers(node, record, $td, _.pick(options, 'mode'));
-      // If the invisible modifiers is true, the <td> element is left empty.
-      // Indeed, if the modifiers was to change the whole cell would be
-      // rerendered anyway.
-      if (modifiers.invisible && !(options && options.renderInvisible)) {
-          return $td;
+      if (record) {
+          var $td = $('<td>', {
+            'class': tdClassName,
+            'data-form-id': record.id,
+            'data-id': record.data.id,
+          });
+          // We register modifiers on the <td> element so that it gets the correct
+          // modifiers classes (for styling)
+          var modifiers = this._registerModifiers(node, record, $td, _.pick(options, 'mode'));
+          // If the invisible modifiers is true, the <td> element is left empty.
+          // Indeed, if the modifiers was to change the whole cell would be
+          // rerendered anyway.
+          if (modifiers.invisible && !(options && options.renderInvisible)) {
+              return $td;
+          }
+          options.mode = this.getParent().mode;  // enforce mode of the parent
+          var widget = this._renderFieldWidget(node, record, _.pick(options, 'mode'));
+          this._handleAttributes(widget.$el, node);
+      } else {
+          var $td = $('<td>', {
+            'class': tdClassName,
+          });
+          var widget = {};
+          widget.$el = $('<input>', {
+            'hidden': true,
+          });
       }
-      options.mode = this.getParent().mode;  // enforce mode of the parent
-      var widget = this._renderFieldWidget(node, record, _.pick(options, 'mode'));
-      this._handleAttributes(widget.$el, node);
       return $td.append(widget.$el);
     },
     /**
@@ -385,7 +398,7 @@ odoo.define('web_widget_x2many_2d_matrix.X2Many2dMatrixRenderer', function (requ
           record = _.findWhere(self.state.data, {id: id});
       _.each(self.rows, function(row) {
         _.each(row.data, function(col, i) {
-          if (col.id == id) {
+          if (col && col.id == id) {
             row.data[i] = record;
           }
         });
