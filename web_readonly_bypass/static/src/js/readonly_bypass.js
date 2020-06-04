@@ -42,18 +42,8 @@
          */
         retrieve_readonly_by_pass_fields: function(options, context){
             var readonly_by_pass_fields = {};
-            if (options && 'readonly_fields' in options &&
-               options['readonly_fields'] && context &&
-               'readonly_by_pass' in context && context['readonly_by_pass']){
-                if (_.isArray(context['readonly_by_pass'])){
-                    $.each( options.readonly_fields, function( key, value ) {
-                        if(_.contains(context['readonly_by_pass'], key)){
-                            readonly_by_pass_fields[key] = value;
-                        }
-                    });
-                }else{
-                    readonly_by_pass_fields = options.readonly_fields;
-                }
+            if (options && 'readonly_fields' in options && options['readonly_fields']){
+                readonly_by_pass_fields = options.readonly_fields;
             }
             return readonly_by_pass_fields;
         },
